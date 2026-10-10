@@ -1,14 +1,19 @@
-export function formatPrice(rubles: number) {
-  return new Intl.NumberFormat("ru-RU", {
+/** Prices are stored as euro cents (250 → €2.50) */
+export function formatPrice(cents: number) {
+  return new Intl.NumberFormat("ru-LT", {
     style: "currency",
-    currency: "RUB",
-    maximumFractionDigits: 0,
-  }).format(rubles)
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(cents / 100)
 }
+
+const CAFE_TZ = "Europe/Vilnius"
 
 export function formatDateTime(value: Date | string) {
   const date = typeof value === "string" ? new Date(value) : value
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat("ru-LT", {
+    timeZone: CAFE_TZ,
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -18,34 +23,41 @@ export function formatDateTime(value: Date | string) {
 
 export function formatTime(value: Date | string) {
   const date = typeof value === "string" ? new Date(value) : value
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat("ru-LT", {
+    timeZone: CAFE_TZ,
     hour: "2-digit",
     minute: "2-digit",
   }).format(date)
 }
 
-/** Local calendar day key YYYY-MM-DD */
+/** Cafe calendar day key YYYY-MM-DD in Europe/Vilnius */
 export function dayKey(value: Date | string) {
   const date = typeof value === "string" ? new Date(value) : value
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: CAFE_TZ,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(date)
+      .map((p) => [p.type, p.value]),
+  )
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 export function formatDayHeading(key: string) {
   const [y, m, d] = key.split("-").map(Number)
-  const date = new Date(y, m - 1, d)
-  const today = new Date()
-  const todayKey = dayKey(today)
-  const yesterday = new Date(today)
-  yesterday.setDate(today.getDate() - 1)
+  const date = new Date(Date.UTC(y, m - 1, d, 12))
+  const todayKey = dayKey(new Date())
+  const yesterday = new Date(Date.now() - 86400000)
   const yesterdayKey = dayKey(yesterday)
 
   if (key === todayKey) return "Сегодня"
   if (key === yesterdayKey) return "Вчера"
 
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat("ru-LT", {
+    timeZone: CAFE_TZ,
     weekday: "short",
     day: "numeric",
     month: "long",
@@ -65,7 +77,11 @@ export function groupByDay<T>(items: T[], getDate: (item: T) => string | Date) {
 
 export function formatPhone(phone: string) {
   const digits = phone.replace(/\D/g, "")
-  if (digits.length === 11) {
+  // Lithuania: 370XXXXXXXX (11 digits)
+  if (digits.startsWith("370") && digits.length === 11) {
+    return `+370 ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`
+  }
+  if (digits.length === 11 && digits.startsWith("7")) {
     return `+${digits[0]} (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9)}`
   }
   return phone

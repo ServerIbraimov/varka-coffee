@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react"
 import { createBookingAction } from "@/app/(public)/actions"
-import { bookingTimeSlots, minBookableDateStr, moscowDateTime } from "@/lib/hours"
+import { bookingTimeSlots, cafeDateTime, minBookableDateStr } from "@/lib/hours"
 import { site } from "@/lib/site"
 
 export function BookingForm() {
@@ -27,7 +27,7 @@ export function BookingForm() {
     setMessage(null)
 
     const form = new FormData(e.currentTarget)
-    const startsAt = moscowDateTime(date, time).toISOString()
+    const startsAt = cafeDateTime(date, time).toISOString()
     const result = await createBookingAction({
       name: form.get("name"),
       phone: form.get("phone"),
@@ -52,7 +52,7 @@ export function BookingForm() {
       <h2 className="display text-3xl">Бронь стола</h2>
       <p className="mt-2 text-sm text-muted">
         Будни {site.hours[0].open}–{site.hours[0].lastBooking}, выходные {site.hours[1].open}–
-        {site.hours[1].lastBooking} (МСК)
+        {site.hours[1].lastBooking} (Вильнюс)
       </p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5 text-sm sm:col-span-2">
@@ -61,7 +61,7 @@ export function BookingForm() {
         </label>
         <label className="grid gap-1.5 text-sm">
           Телефон
-          <input name="phone" required className="field" placeholder="+7 900 000-00-00" />
+          <input name="phone" required className="field" placeholder="+370 612 00 000" />
         </label>
         <label className="grid gap-1.5 text-sm">
           Гостей

@@ -74,6 +74,7 @@ export async function upsertMenuItem(formData: FormData) {
 
   const data = {
     ...parsed.data,
+    price: Math.round(parsed.data.price * 100),
     image: parsed.data.image || "",
     featured: Boolean(parsed.data.featured),
     available: parsed.data.available !== false,

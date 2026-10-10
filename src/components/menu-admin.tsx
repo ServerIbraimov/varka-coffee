@@ -68,8 +68,16 @@ export function MenuAdmin({ items }: { items: Item[] }) {
             <textarea name="description" required className="field" defaultValue={formItem?.description || ""} />
           </label>
           <label className="grid gap-1.5 text-sm">
-            Цена ₽
-            <input name="price" type="number" required className="field" defaultValue={formItem?.price || 300} />
+            Цена €
+            <input
+              name="price"
+              type="number"
+              step="0.01"
+              min="0.5"
+              required
+              className="field"
+              defaultValue={formItem ? formItem.price / 100 : 3}
+            />
           </label>
           <label className="grid gap-1.5 text-sm">
             Категория

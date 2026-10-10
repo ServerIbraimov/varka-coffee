@@ -8,6 +8,7 @@ import { getMenuByIds } from "@/lib/menu"
 import {
   createBookingSchema,
   createOrderSchema,
+  isValidPhone,
   normalizePhone,
 } from "@/lib/validators"
 
@@ -23,8 +24,8 @@ export async function createOrderAction(input: unknown): Promise<ActionResult> {
 
   const data = parsed.data
   const phone = normalizePhone(data.phone)
-  if (phone.length < 11) {
-    return { ok: false, message: "Укажите корректный телефон." }
+  if (!isValidPhone(data.phone)) {
+    return { ok: false, message: "Укажите литовский номер (+370…)." }
   }
 
   const pickupAt = new Date(data.pickupAt)
@@ -102,8 +103,8 @@ export async function createBookingAction(input: unknown): Promise<ActionResult>
 
   const data = parsed.data
   const phone = normalizePhone(data.phone)
-  if (phone.length < 11) {
-    return { ok: false, message: "Укажите корректный телефон." }
+  if (!isValidPhone(data.phone)) {
+    return { ok: false, message: "Укажите литовский номер (+370…)." }
   }
 
   const startsAt = new Date(data.startsAt)

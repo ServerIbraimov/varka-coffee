@@ -24,7 +24,7 @@ export const createBookingSchema = z.object({
 export const menuItemSchema = z.object({
   name: z.string().trim().min(2).max(80),
   description: z.string().trim().min(4).max(400),
-  price: z.coerce.number().int().min(1).max(100000),
+  price: z.coerce.number().min(0.5).max(1000),
   category: z.string().trim().min(1),
   image: z.string().trim().max(500).optional().or(z.literal("")),
   featured: z.coerce.boolean().optional(),
@@ -38,10 +38,20 @@ export const loginSchema = z.object({
 })
 
 export function normalizePhone(phone: string) {
-  const digits = phone.replace(/\D/g, "")
+  let digits = phone.replace(/\D/g, "")
+  // Lithuania: +370 6XX XXXXX / 8 6XX XXXXX
+  if (digits.startsWith("370") && digits.length === 11) return digits
+  if (digits.startsWith("8") && digits.length === 9) return `370${digits.slice(1)}`
+  if (digits.length === 8 && digits.startsWith("6")) return `370${digits}`
+  // legacy RU fallback
   if (digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"))) {
     return `7${digits.slice(1)}`
   }
   if (digits.length === 10) return `7${digits}`
   return digits
+}
+
+export function isValidPhone(phone: string) {
+  const n = normalizePhone(phone)
+  return (n.startsWith("370") && n.length === 11) || (n.startsWith("7") && n.length === 11)
 }

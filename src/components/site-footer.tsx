@@ -11,7 +11,7 @@ export function SiteFooter() {
         <div>
           <p className="text-xs tracking-[0.2em] text-foam/45 uppercase">Контакты</p>
           <p className="mt-3">{site.address}</p>
-          <p className="text-foam/70">м. {site.metro}</p>
+          <p className="text-foam/70">{site.district}</p>
           <a href={site.phoneHref} className="mt-3 block hover:underline">
             {site.phoneDisplay}
           </a>

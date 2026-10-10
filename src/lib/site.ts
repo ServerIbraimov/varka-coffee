@@ -1,20 +1,21 @@
 export const site = {
   name: "ВАРКА",
-  city: "Санкт-Петербург",
-  tagline: "Спешалти на Петроградке",
+  city: "Вильнюс",
+  country: "Литва",
+  countryCode: "LT",
+  tagline: "Спешалти в Старом городе",
   description:
-    "Кофейня с короткой обжаркой: эспрессо, фильтр, выпечка и столы у окна без спешки.",
-  address: "Большой пр. П.С., 28",
-  metro: "Петроградская",
-  phoneDisplay: "+7 (812) 401-28-17",
-  phoneHref: "tel:+78124012817",
+    "Кофейня с короткой обжаркой: эспрессо, фильтр, десерты и тихие столы во дворе Старого Вильнюса.",
+  address: "Pilies g. 12",
+  district: "Старый город",
+  phoneDisplay: "+370 612 45 817",
+  phoneHref: "tel:+37061245817",
   email: "hello@varka.cafe",
   hours: [
-    { days: "Пн–Пт", open: "08:00", close: "22:00", lastBooking: "21:00" },
-    { days: "Сб–Вс", open: "09:00", close: "23:00", lastBooking: "22:00" },
+    { days: "Пн–Пт", open: "08:00", close: "21:00", lastBooking: "20:00" },
+    { days: "Сб–Вс", open: "09:00", close: "22:00", lastBooking: "21:00" },
   ],
-  mapHref:
-    "https://yandex.ru/maps/?text=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3%20%D0%91%D0%BE%D0%BB%D1%8C%D1%88%D0%BE%D0%B9%20%D0%BF%D1%80.%20%D0%9F.%D0%A1.%2028",
+  mapHref: "https://maps.google.com/?q=Pilies+g.+12,+Vilnius",
 } as const
 
 export const heroImage =

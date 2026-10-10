@@ -19,7 +19,7 @@ export default async function HomePage() {
       "@type": "PostalAddress",
       streetAddress: site.address,
       addressLocality: site.city,
-      addressCountry: "RU",
+      addressCountry: site.countryCode,
     },
     telephone: site.phoneHref.replace("tel:", ""),
   }
@@ -40,7 +40,7 @@ export default async function HomePage() {
 
         <div className="relative mx-auto flex min-h-[100svh] w-full max-w-6xl flex-col justify-end px-5 pb-16 pt-28 sm:pb-24">
           <p className="fade-up text-xs tracking-[0.32em] text-brass uppercase">
-            {site.city} · {site.metro}
+            {site.city} · {site.district}
           </p>
           <h1 className="fade-up display mt-5 max-w-4xl text-[clamp(3.8rem,12vw,7.5rem)] leading-[0.9] text-white">
             {site.name}
@@ -143,9 +143,9 @@ export default async function HomePage() {
         </div>
         <div>
           <p className="text-xs tracking-[0.24em] text-brass uppercase">Визит</p>
-          <h2 className="display mt-3 text-5xl leading-none sm:text-6xl">Петроградка, пока светло</h2>
+          <h2 className="display mt-3 text-5xl leading-none sm:text-6xl">Старый город, пока светло</h2>
           <p className="mt-6 max-w-md leading-7 text-muted">
-            {site.address}, метро {site.metro}. Будни с {site.hours[0].open}, выходные с {site.hours[1].open}.
+            {site.address}, {site.district}. Будни с {site.hours[0].open}, выходные с {site.hours[1].open}.
             Последняя бронь — в {site.hours[0].lastBooking}.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">

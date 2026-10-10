@@ -5,7 +5,7 @@ import Link from "next/link"
 import { createOrderAction } from "@/app/(public)/actions"
 import { useCart } from "@/components/cart-provider"
 import { formatPrice } from "@/lib/format"
-import { minBookableDateStr, moscowDateTime, pickupTimeSlots } from "@/lib/hours"
+import { cafeDateTime, minBookableDateStr, pickupTimeSlots } from "@/lib/hours"
 import { site } from "@/lib/site"
 
 export function OrderForm() {
@@ -39,7 +39,7 @@ export function OrderForm() {
       name: form.get("name"),
       phone: form.get("phone"),
       comment: form.get("comment") || "",
-      pickupAt: moscowDateTime(date, time).toISOString(),
+      pickupAt: cafeDateTime(date, time).toISOString(),
       items: items.map((i) => ({ menuItemId: i.menuItemId, qty: i.qty })),
     })
 
@@ -121,7 +121,7 @@ export function OrderForm() {
           </label>
           <label className="grid gap-1.5 text-sm">
             Телефон
-            <input name="phone" required className="field" placeholder="+7 900 000-00-00" />
+            <input name="phone" required className="field" placeholder="+370 612 00 000" />
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm">
