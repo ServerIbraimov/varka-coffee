@@ -3,9 +3,16 @@
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
+import { CrmDaySection } from "@/components/crm-day-section"
 import { StatusSelect } from "@/components/status-select"
 import { StatusBadge, orderBuckets } from "@/lib/crm-ui"
-import { formatDateTime, formatPhone, formatPrice } from "@/lib/format"
+import {
+  formatDayHeading,
+  formatPhone,
+  formatPrice,
+  formatTime,
+  groupByDay,
+} from "@/lib/format"
 import { orderStatuses } from "@/lib/site"
 
 export type CrmOrderRow = {
@@ -30,6 +37,7 @@ export function CrmOrdersBoard({
   const [bucket, setBucket] = useState<string>("active")
   const [status, setStatus] = useState<string>("all")
   const [q, setQ] = useState("")
+  const [dayFilter, setDayFilter] = useState<string>("all")
 
   const counts = useMemo(() => {
     const map: Record<string, number> = {}
@@ -57,12 +65,26 @@ export function CrmOrdersBoard({
     })
   }, [orders, bucket, status, q])
 
+  const days = useMemo(() => groupByDay(list, (o) => o.createdAt), [list])
+
+  const dayOptions = useMemo(
+    () => days.map(([key, items]) => ({ key, label: formatDayHeading(key), count: items.length })),
+    [days],
+  )
+
+  const visibleDays = useMemo(
+    () => (dayFilter === "all" ? days : days.filter(([key]) => key === dayFilter)),
+    [days, dayFilter],
+  )
+
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-4xl">Заказы</h1>
-          <p className="mt-1 text-sm text-muted">{list.length} из {orders.length}</p>
+          <p className="mt-1 text-sm text-muted">
+            {list.length} из {orders.length} · по дням смены
+          </p>
         </div>
       </div>
 
@@ -77,6 +99,30 @@ export function CrmOrdersBoard({
             }`}
           >
             {b.label} <span className="opacity-70">{counts[b.id] ?? 0}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button
+          type="button"
+          onClick={() => setDayFilter("all")}
+          className={`shrink-0 rounded-xl px-3 py-2 text-sm ${
+            dayFilter === "all" ? "bg-ink text-foam" : "border border-line bg-foam"
+          }`}
+        >
+          Все дни
+        </button>
+        {dayOptions.map((d) => (
+          <button
+            key={d.key}
+            type="button"
+            onClick={() => setDayFilter(d.key)}
+            className={`shrink-0 rounded-xl px-3 py-2 text-sm ${
+              dayFilter === d.key ? "bg-ink text-foam" : "border border-line bg-foam"
+            }`}
+          >
+            {d.label} · {d.count}
           </button>
         ))}
       </div>
@@ -101,43 +147,68 @@ export function CrmOrdersBoard({
         </select>
       </div>
 
-      <div className="mt-6 space-y-3">
-        {list.map((order) => (
-          <article
-            key={order.id}
-            className="rounded-2xl border border-line bg-foam p-4 transition hover:border-pine/30 sm:p-5"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge status={order.status} />
-                  <Link href={`/admin/orders/${order.id}`} className="font-medium hover:underline">
-                    {order.guestName}
-                  </Link>
-                </div>
-                <p className="mt-1 text-sm text-muted">{formatPhone(order.guestPhone)}</p>
-                <p className="mt-2 text-sm">{order.itemsLabel}</p>
-                {order.comment ? <p className="mt-1 text-sm text-muted">{order.comment}</p> : null}
-                <p className="mt-2 text-xs text-muted">
-                  {formatDateTime(order.createdAt)}
-                  {order.pickupAt ? ` · самовывоз ${formatDateTime(order.pickupAt)}` : ""}
-                </p>
-              </div>
-              <div className="flex min-w-[11rem] flex-col items-end gap-3">
-                <p className="display text-2xl">{formatPrice(order.total)}</p>
-                <StatusSelect
-                  value={order.status}
-                  options={orderStatuses}
-                  onChange={(next) => onStatus(order.id, next)}
-                />
-                <Link href={`/admin/orders/${order.id}`} className="text-sm text-pine underline underline-offset-4">
-                  Открыть
-                </Link>
-              </div>
-            </div>
-          </article>
-        ))}
-        {!list.length ? <p className="rounded-2xl border border-line bg-foam p-8 text-center text-muted">Нет заказов по фильтру</p> : null}
+      <div className="mt-8 space-y-8">
+        {visibleDays.map(([key, dayOrders]) => {
+          const revenue = dayOrders
+            .filter((o) => o.status !== "cancelled")
+            .reduce((s, o) => s + o.total, 0)
+          const active = dayOrders.filter((o) =>
+            ["new", "preparing", "ready"].includes(o.status),
+          ).length
+          return (
+            <CrmDaySection
+              key={key}
+              title={formatDayHeading(key)}
+              meta={`${dayOrders.length} заказ. · ${active} активн. · ${formatPrice(revenue)}`}
+            >
+              {dayOrders.map((order) => (
+                <article
+                  key={order.id}
+                  className="rounded-2xl border border-line bg-foam p-4 transition hover:border-pine/30 sm:p-5"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-md bg-mist px-2 py-0.5 text-xs font-medium text-muted tabular-nums">
+                          {formatTime(order.createdAt)}
+                        </span>
+                        <StatusBadge status={order.status} />
+                        <Link href={`/admin/orders/${order.id}`} className="font-medium hover:underline">
+                          {order.guestName}
+                        </Link>
+                      </div>
+                      <p className="mt-1 text-sm text-muted">{formatPhone(order.guestPhone)}</p>
+                      <p className="mt-2 text-sm">{order.itemsLabel}</p>
+                      {order.comment ? <p className="mt-1 text-sm text-muted">{order.comment}</p> : null}
+                      {order.pickupAt ? (
+                        <p className="mt-2 text-xs text-muted">Самовывоз {formatTime(order.pickupAt)}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex min-w-[11rem] flex-col items-end gap-3">
+                      <p className="display text-2xl">{formatPrice(order.total)}</p>
+                      <StatusSelect
+                        value={order.status}
+                        options={orderStatuses}
+                        onChange={(next) => onStatus(order.id, next)}
+                      />
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        className="text-sm text-pine underline underline-offset-4"
+                      >
+                        Открыть
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </CrmDaySection>
+          )
+        })}
+        {!visibleDays.length ? (
+          <p className="rounded-2xl border border-line bg-foam p-8 text-center text-muted">
+            Нет заказов по фильтру
+          </p>
+        ) : null}
       </div>
     </div>
   )

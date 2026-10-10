@@ -3,9 +3,15 @@
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
+import { CrmDaySection } from "@/components/crm-day-section"
 import { StatusSelect } from "@/components/status-select"
 import { StatusBadge, bookingBuckets } from "@/lib/crm-ui"
-import { formatDateTime, formatPhone } from "@/lib/format"
+import {
+  formatDayHeading,
+  formatPhone,
+  formatTime,
+  groupByDay,
+} from "@/lib/format"
 import { bookingStatuses } from "@/lib/site"
 
 export type CrmBookingRow = {
@@ -28,6 +34,7 @@ export function CrmBookingsBoard({
   const [bucket, setBucket] = useState<string>("active")
   const [status, setStatus] = useState<string>("all")
   const [q, setQ] = useState("")
+  const [dayFilter, setDayFilter] = useState<string>("all")
 
   const counts = useMemo(() => {
     const map: Record<string, number> = {}
@@ -54,12 +61,24 @@ export function CrmBookingsBoard({
     })
   }, [bookings, bucket, status, q])
 
+  const days = useMemo(() => groupByDay(list, (o) => o.startsAt), [list])
+  const dayOptions = useMemo(
+    () => days.map(([key, items]) => ({ key, label: formatDayHeading(key), count: items.length })),
+    [days],
+  )
+  const visibleDays = useMemo(
+    () => (dayFilter === "all" ? days : days.filter(([key]) => key === dayFilter)),
+    [days, dayFilter],
+  )
+
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-4xl">Брони</h1>
-          <p className="mt-1 text-sm text-muted">{list.length} из {bookings.length}</p>
+          <p className="mt-1 text-sm text-muted">
+            {list.length} из {bookings.length} · по дням визита
+          </p>
         </div>
       </div>
 
@@ -74,6 +93,30 @@ export function CrmBookingsBoard({
             }`}
           >
             {b.label} <span className="opacity-70">{counts[b.id] ?? 0}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button
+          type="button"
+          onClick={() => setDayFilter("all")}
+          className={`shrink-0 rounded-xl px-3 py-2 text-sm ${
+            dayFilter === "all" ? "bg-ink text-foam" : "border border-line bg-foam"
+          }`}
+        >
+          Все дни
+        </button>
+        {dayOptions.map((d) => (
+          <button
+            key={d.key}
+            type="button"
+            onClick={() => setDayFilter(d.key)}
+            className={`shrink-0 rounded-xl px-3 py-2 text-sm ${
+              dayFilter === d.key ? "bg-ink text-foam" : "border border-line bg-foam"
+            }`}
+          >
+            {d.label} · {d.count}
           </button>
         ))}
       </div>
@@ -98,40 +141,56 @@ export function CrmBookingsBoard({
         </select>
       </div>
 
-      <div className="mt-6 space-y-3">
-        {list.map((booking) => (
-          <article
-            key={booking.id}
-            className="rounded-2xl border border-line bg-foam p-4 transition hover:border-pine/30 sm:p-5"
+      <div className="mt-8 space-y-8">
+        {visibleDays.map(([key, dayBookings]) => (
+          <CrmDaySection
+            key={key}
+            title={formatDayHeading(key)}
+            meta={`${dayBookings.length} брон. · ${dayBookings.reduce((s, b) => s + b.partySize, 0)} гостей`}
           >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge status={booking.status} kind="booking" />
-                  <Link href={`/admin/bookings/${booking.id}`} className="font-medium hover:underline">
-                    {booking.guestName}
-                  </Link>
+            {dayBookings.map((booking) => (
+              <article
+                key={booking.id}
+                className="rounded-2xl border border-line bg-foam p-4 transition hover:border-pine/30 sm:p-5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-mist px-2 py-0.5 text-xs font-medium text-muted tabular-nums">
+                        {formatTime(booking.startsAt)}
+                      </span>
+                      <StatusBadge status={booking.status} kind="booking" />
+                      <Link href={`/admin/bookings/${booking.id}`} className="font-medium hover:underline">
+                        {booking.guestName}
+                      </Link>
+                    </div>
+                    <p className="mt-1 text-sm text-muted">{formatPhone(booking.guestPhone)}</p>
+                    <p className="mt-2 text-sm">{booking.partySize} гост.</p>
+                    {booking.comment ? <p className="mt-1 text-sm text-muted">{booking.comment}</p> : null}
+                  </div>
+                  <div className="flex min-w-[11rem] flex-col items-end gap-3">
+                    <StatusSelect
+                      value={booking.status}
+                      options={bookingStatuses}
+                      onChange={(next) => onStatus(booking.id, next)}
+                    />
+                    <Link
+                      href={`/admin/bookings/${booking.id}`}
+                      className="text-sm text-pine underline underline-offset-4"
+                    >
+                      Открыть
+                    </Link>
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-muted">{formatPhone(booking.guestPhone)}</p>
-                <p className="mt-2 text-sm">
-                  {booking.partySize} гост. · {formatDateTime(booking.startsAt)}
-                </p>
-                {booking.comment ? <p className="mt-1 text-sm text-muted">{booking.comment}</p> : null}
-              </div>
-              <div className="flex min-w-[11rem] flex-col items-end gap-3">
-                <StatusSelect
-                  value={booking.status}
-                  options={bookingStatuses}
-                  onChange={(next) => onStatus(booking.id, next)}
-                />
-                <Link href={`/admin/bookings/${booking.id}`} className="text-sm text-pine underline underline-offset-4">
-                  Открыть
-                </Link>
-              </div>
-            </div>
-          </article>
+              </article>
+            ))}
+          </CrmDaySection>
         ))}
-        {!list.length ? <p className="rounded-2xl border border-line bg-foam p-8 text-center text-muted">Нет броней по фильтру</p> : null}
+        {!visibleDays.length ? (
+          <p className="rounded-2xl border border-line bg-foam p-8 text-center text-muted">
+            Нет броней по фильтру
+          </p>
+        ) : null}
       </div>
     </div>
   )

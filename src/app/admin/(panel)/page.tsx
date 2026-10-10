@@ -1,6 +1,11 @@
 import Link from "next/link"
 import { StatusBadge } from "@/lib/crm-ui"
-import { formatDateTime, formatPrice } from "@/lib/format"
+import {
+  formatDayHeading,
+  formatPrice,
+  formatTime,
+  groupByDay,
+} from "@/lib/format"
 import { prisma } from "@/lib/prisma"
 
 export default async function AdminDashboardPage() {
@@ -15,14 +20,14 @@ export default async function AdminDashboardPage() {
         where: { status: { not: "cancelled" } },
       }),
       prisma.order.findMany({
-        take: 6,
+        take: 24,
         orderBy: { createdAt: "desc" },
         include: { guest: true, items: true },
       }),
       prisma.booking.findMany({
-        take: 6,
+        take: 24,
         orderBy: { startsAt: "asc" },
-        where: { startsAt: { gte: new Date() }, status: { not: "cancelled" } },
+        where: { startsAt: { gte: new Date(Date.now() - 86400000) }, status: { not: "cancelled" } },
         include: { guest: true },
       }),
     ])
@@ -33,6 +38,9 @@ export default async function AdminDashboardPage() {
     { label: "Новые брони", value: String(bookingsNew), href: "/admin/bookings" },
     { label: "Выручка", value: formatPrice(revenue._sum.total ?? 0), href: "/admin/orders" },
   ]
+
+  const orderDays = groupByDay(recentOrders, (o) => o.createdAt).slice(0, 4)
+  const bookingDays = groupByDay(upcomingBookings, (b) => b.startsAt).slice(0, 4)
 
   return (
     <div>
@@ -55,59 +63,90 @@ export default async function AdminDashboardPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         <section className="rounded-2xl border border-line bg-foam p-6">
           <div className="flex items-center justify-between">
-            <h2 className="display text-2xl">Заказы</h2>
+            <h2 className="display text-2xl">Заказы по дням</h2>
             <Link href="/admin/orders" className="text-sm text-pine underline">
               Все
             </Link>
           </div>
-          <ul className="mt-4 space-y-3">
-            {recentOrders.map((order) => (
-              <li key={order.id} className="border-b border-line pb-3 text-sm">
-                <Link href={`/admin/orders/${order.id}`} className="flex items-start justify-between gap-3 hover:opacity-80">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusBadge status={order.status} />
-                      <span className="font-medium">{order.guest.name}</span>
-                    </div>
-                    <p className="mt-1 text-muted">
-                      {order.items.map((i) => `${i.name}×${i.qty}`).join(", ")}
+          <div className="mt-5 space-y-5">
+            {orderDays.map(([key, dayOrders]) => {
+              const dayRevenue = dayOrders
+                .filter((o) => o.status !== "cancelled")
+                .reduce((s, o) => s + o.total, 0)
+              return (
+                <div key={key}>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">{formatDayHeading(key)}</p>
+                    <p className="text-xs text-muted">
+                      {dayOrders.length} · {formatPrice(dayRevenue)}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p>{formatPrice(order.total)}</p>
-                    <p className="text-xs text-muted">{formatDateTime(order.createdAt)}</p>
-                  </div>
-                </Link>
-              </li>
-            ))}
-            {!recentOrders.length ? <li className="text-muted">Пока пусто</li> : null}
-          </ul>
+                  <ul className="space-y-2">
+                    {dayOrders.slice(0, 5).map((order) => (
+                      <li key={order.id}>
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="flex items-start justify-between gap-3 rounded-xl border border-transparent px-2 py-2 hover:border-line hover:bg-mist/70"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xs tabular-nums text-muted">{formatTime(order.createdAt)}</span>
+                              <StatusBadge status={order.status} />
+                              <span className="font-medium">{order.guest.name}</span>
+                            </div>
+                            <p className="mt-1 truncate text-xs text-muted">
+                              {order.items.map((i) => `${i.name}×${i.qty}`).join(", ")}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-sm">{formatPrice(order.total)}</p>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
+            {!orderDays.length ? <p className="text-muted">Пока пусто</p> : null}
+          </div>
         </section>
 
         <section className="rounded-2xl border border-line bg-foam p-6">
           <div className="flex items-center justify-between">
-            <h2 className="display text-2xl">Брони</h2>
+            <h2 className="display text-2xl">Брони по дням</h2>
             <Link href="/admin/bookings" className="text-sm text-pine underline">
               Все
             </Link>
           </div>
-          <ul className="mt-4 space-y-3">
-            {upcomingBookings.map((b) => (
-              <li key={b.id} className="border-b border-line pb-3 text-sm">
-                <Link href={`/admin/bookings/${b.id}`} className="flex items-start justify-between gap-3 hover:opacity-80">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusBadge status={b.status} kind="booking" />
-                      <span className="font-medium">{b.guest.name}</span>
-                    </div>
-                    <p className="mt-1 text-muted">{b.partySize} гост.</p>
-                  </div>
-                  <p className="text-right text-muted">{formatDateTime(b.startsAt)}</p>
-                </Link>
-              </li>
+          <div className="mt-5 space-y-5">
+            {bookingDays.map(([key, dayBookings]) => (
+              <div key={key}>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold">{formatDayHeading(key)}</p>
+                  <p className="text-xs text-muted">{dayBookings.length} брон.</p>
+                </div>
+                <ul className="space-y-2">
+                  {dayBookings.slice(0, 5).map((b) => (
+                    <li key={b.id}>
+                      <Link
+                        href={`/admin/bookings/${b.id}`}
+                        className="flex items-start justify-between gap-3 rounded-xl border border-transparent px-2 py-2 hover:border-line hover:bg-mist/70"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs tabular-nums text-muted">{formatTime(b.startsAt)}</span>
+                            <StatusBadge status={b.status} kind="booking" />
+                            <span className="font-medium">{b.guest.name}</span>
+                          </div>
+                          <p className="mt-1 text-xs text-muted">{b.partySize} гост.</p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-            {!upcomingBookings.length ? <li className="text-muted">Пока пусто</li> : null}
-          </ul>
+            {!bookingDays.length ? <p className="text-muted">Пока пусто</p> : null}
+          </div>
         </section>
       </div>
     </div>

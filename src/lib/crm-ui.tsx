@@ -14,21 +14,23 @@ export const bookingStatusMeta: Record<string, { label: string; tone: string; do
   cancelled: { label: "Отменена", tone: "bg-rose-50 text-rose-800 border-rose-200", dot: "bg-rose-500" },
 }
 
-export const orderBuckets = [
+type StatusBucket = { id: string; label: string; statuses: string[] }
+
+export const orderBuckets: StatusBucket[] = [
   { id: "new", label: "Новые", statuses: ["new"] },
   { id: "active", label: "Активные", statuses: ["new", "preparing", "ready"] },
   { id: "done", label: "Завершённые", statuses: ["done"] },
   { id: "cancelled", label: "Отменённые", statuses: ["cancelled"] },
-  { id: "all", label: "Все", statuses: [] as string[] },
-] as const
+  { id: "all", label: "Все", statuses: [] },
+]
 
-export const bookingBuckets = [
+export const bookingBuckets: StatusBucket[] = [
   { id: "new", label: "Новые", statuses: ["new"] },
   { id: "active", label: "Активные", statuses: ["new", "confirmed", "seated"] },
   { id: "done", label: "Завершённые", statuses: ["done"] },
   { id: "cancelled", label: "Отменённые", statuses: ["cancelled"] },
-  { id: "all", label: "Все", statuses: [] as string[] },
-] as const
+  { id: "all", label: "Все", statuses: [] },
+]
 
 export function StatusBadge({
   status,
