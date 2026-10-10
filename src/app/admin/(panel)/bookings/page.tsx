@@ -1,48 +1,28 @@
 import { updateBookingStatus } from "@/app/admin/actions"
-import { StatusSelect } from "@/components/status-select"
-import { formatDateTime, formatPhone } from "@/lib/format"
+import { CrmBookingsBoard } from "@/components/crm-bookings-board"
 import { prisma } from "@/lib/prisma"
-import { bookingStatuses } from "@/lib/site"
 
 export default async function AdminBookingsPage() {
   const bookings = await prisma.booking.findMany({
     orderBy: { startsAt: "desc" },
     include: { guest: true },
-    take: 100,
+    take: 200,
   })
 
-  return (
-    <div>
-      <h1 className="display text-4xl">Брони</h1>
-      <p className="mt-2 text-muted">{bookings.length} записей</p>
+  const rows = bookings.map((booking) => ({
+    id: booking.id,
+    status: booking.status,
+    partySize: booking.partySize,
+    comment: booking.comment,
+    startsAt: booking.startsAt.toISOString(),
+    guestName: booking.guest.name,
+    guestPhone: booking.guest.phone,
+  }))
 
-      <div className="mt-8 space-y-4">
-        {bookings.map((booking) => (
-          <article key={booking.id} className="rounded-2xl border border-line bg-foam p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="font-medium">{booking.guest.name}</p>
-                <p className="text-sm text-muted">{formatPhone(booking.guest.phone)}</p>
-                <p className="mt-2 text-sm">
-                  {booking.partySize} гост. · {formatDateTime(booking.startsAt)}
-                </p>
-                {booking.comment ? <p className="mt-1 text-sm text-muted">{booking.comment}</p> : null}
-              </div>
-              <div className="min-w-[10rem]">
-                <StatusSelect
-                  value={booking.status}
-                  options={bookingStatuses}
-                  onChange={async (status) => {
-                    "use server"
-                    await updateBookingStatus(booking.id, status)
-                  }}
-                />
-              </div>
-            </div>
-          </article>
-        ))}
-        {!bookings.length ? <p className="text-muted">Броней пока нет.</p> : null}
-      </div>
-    </div>
-  )
+  async function onStatus(id: string, status: string) {
+    "use server"
+    await updateBookingStatus(id, status)
+  }
+
+  return <CrmBookingsBoard bookings={rows} onStatus={onStatus} />
 }

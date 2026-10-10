@@ -71,26 +71,25 @@ function LoginForm() {
         <div className="grid gap-4">
           <label className="grid gap-1.5 text-sm">
             Email
-            <input
+          <input
               name="email"
               type="email"
               required
-              defaultValue="admin@varka.cafe"
               className="field"
               autoComplete="username"
+              placeholder="admin@varka.cafe"
             />
-          </label>
-          <label className="grid gap-1.5 text-sm">
-            Пароль
-            <input
-              name="password"
-              type="password"
-              required
-              defaultValue="varka2026"
-              className="field"
-              autoComplete="current-password"
-            />
-          </label>
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          Пароль
+          <input
+            name="password"
+            type="password"
+            required
+            className="field"
+            autoComplete="current-password"
+          />
+        </label>
         </div>
 
         {error || authError ? (
@@ -105,7 +104,7 @@ function LoginForm() {
       </form>
 
       <p className="relative mt-4 text-xs leading-5 text-muted">
-        Демо-пароль: admin@varka.cafe / varka2026. Google — если заданы AUTH_GOOGLE_* и email в ADMIN_EMAILS.
+        Вход по паролю или Google (email должен быть в ADMIN_EMAILS).
       </p>
       <Link href="/" className="relative mt-4 inline-block text-sm text-pine underline underline-offset-4">
         На сайт

@@ -6,7 +6,7 @@ import { useCart } from "@/components/cart-provider"
 import { formatPrice, safeImage } from "@/lib/format"
 
 export function CartDrawer() {
-  const { items, total, count, open, closeCart, setQty, remove, lastAdded, clearLastAdded } = useCart()
+  const { items, total, count, open, closeCart, setQty, remove } = useCart()
 
   if (!open) return null
 
@@ -35,28 +35,6 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {lastAdded ? (
-          <div className="toast-in mx-5 mt-4 flex items-center gap-3 rounded-2xl border border-pine/20 bg-pine/8 px-3 py-2.5">
-            <div className="h-11 w-11 overflow-hidden rounded-xl bg-line">
-              {safeImage(lastAdded.image) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={safeImage(lastAdded.image)!} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-pine">
-                  <ShoppingBag size={16} />
-                </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-pine">Добавлено</p>
-              <p className="truncate font-medium">{lastAdded.name}</p>
-            </div>
-            <button type="button" className="text-muted" onClick={clearLastAdded} aria-label="Скрыть">
-              <X size={14} />
-            </button>
-          </div>
-        ) : null}
-
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {!items.length ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
@@ -64,7 +42,7 @@ export function CartDrawer() {
                 <ShoppingBag size={22} />
               </div>
               <p className="display mt-5 text-3xl">Пока пусто</p>
-              <p className="mt-2 max-w-xs text-sm text-muted">Добавьте чашку из меню — она появится здесь.</p>
+              <p className="mt-2 max-w-xs text-sm text-muted">Добавьте позиции из меню</p>
               <Link href="/menu" className="btn btn-pine mt-6" onClick={closeCart}>
                 Открыть меню
               </Link>
@@ -132,13 +110,6 @@ export function CartDrawer() {
             </div>
             <Link href="/order" className="btn btn-pine mt-4 w-full" onClick={closeCart}>
               Оформить заказ
-            </Link>
-            <Link
-              href="/menu"
-              className="mt-3 block text-center text-sm text-muted underline underline-offset-4"
-              onClick={closeCart}
-            >
-              Продолжить выбирать
             </Link>
           </div>
         ) : null}

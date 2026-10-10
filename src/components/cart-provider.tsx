@@ -93,7 +93,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
     setLastAdded({ name: item.name, image: item.image, at: Date.now() })
     setBump((n) => n + 1)
-    setOpen(true)
   }, [])
 
   const setQty = useCallback((menuItemId: string, qty: number) => {

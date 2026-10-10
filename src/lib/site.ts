@@ -55,5 +55,5 @@ export const categories = [
   { id: "espresso", label: "Эспрессо", blurb: "Плотные шоты и классика" },
   { id: "filter", label: "Фильтр", blurb: "Пуровер и лот дня" },
   { id: "milk", label: "С молоком", blurb: "Флэт, капучино, латте" },
-  { id: "food", label: "Еда", blurb: "Выпечка к чашке" },
+  { id: "food", label: "Десерты", blurb: "Выпечка и сладкое к чашке" },
 ] as const

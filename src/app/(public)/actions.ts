@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { publishCrm } from "@/lib/crm-bus"
+import { isWithinBookingHours, isWithinPickupHours } from "@/lib/hours"
 import { prisma } from "@/lib/prisma"
 import { getMenuByIds } from "@/lib/menu"
 import {
@@ -26,6 +27,17 @@ export async function createOrderAction(input: unknown): Promise<ActionResult> {
     return { ok: false, message: "Укажите корректный телефон." }
   }
 
+  const pickupAt = new Date(data.pickupAt)
+  if (Number.isNaN(pickupAt.getTime())) {
+    return { ok: false, message: "Некорректное время самовывоза." }
+  }
+  if (pickupAt.getTime() < Date.now() - 60_000) {
+    return { ok: false, message: "Выберите время в будущем." }
+  }
+  if (!isWithinPickupHours(pickupAt)) {
+    return { ok: false, message: "Самовывоз только в часы работы кофейни." }
+  }
+
   const menuItems = await getMenuByIds(data.items.map((i) => i.menuItemId))
   const byId = new Map(menuItems.map((m) => [m.id, m]))
 
@@ -45,21 +57,9 @@ export async function createOrderAction(input: unknown): Promise<ActionResult> {
 
   const guest = await prisma.guest.upsert({
     where: { phone },
-    update: {
-      name: data.name,
-      email: data.email || undefined,
-    },
-    create: {
-      name: data.name,
-      phone,
-      email: data.email || "",
-    },
+    update: { name: data.name },
+    create: { name: data.name, phone, email: "" },
   })
-
-  const pickupAt = data.pickupAt ? new Date(data.pickupAt) : null
-  if (pickupAt && Number.isNaN(pickupAt.getTime())) {
-    return { ok: false, message: "Некорректное время самовывоза." }
-  }
 
   const order = await prisma.order.create({
     data: {
@@ -113,18 +113,14 @@ export async function createBookingAction(input: unknown): Promise<ActionResult>
   if (startsAt.getTime() < Date.now() - 60_000) {
     return { ok: false, message: "Выберите время в будущем." }
   }
+  if (!isWithinBookingHours(startsAt)) {
+    return { ok: false, message: "Бронь только в часы работы кофейни." }
+  }
 
   const guest = await prisma.guest.upsert({
     where: { phone },
-    update: {
-      name: data.name,
-      email: data.email || undefined,
-    },
-    create: {
-      name: data.name,
-      phone,
-      email: data.email || "",
-    },
+    update: { name: data.name },
+    create: { name: data.name, phone, email: "" },
   })
 
   const booking = await prisma.booking.create({

@@ -50,7 +50,10 @@ export function AdminShell({
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-4 lg:flex-col">
           {links.map((link) => {
-            const active = pathname === link.href
+            const active =
+              link.href === "/admin"
+                ? pathname === "/admin"
+                : pathname === link.href || pathname.startsWith(`${link.href}/`)
             const Icon = link.icon
             const count =
               link.badge === "orders"

@@ -8,16 +8,14 @@ export const orderItemSchema = z.object({
 export const createOrderSchema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(10).max(20),
-  email: z.string().trim().email().optional().or(z.literal("")),
   comment: z.string().trim().max(400).optional().or(z.literal("")),
-  pickupAt: z.string().optional().or(z.literal("")),
+  pickupAt: z.string().min(1),
   items: z.array(orderItemSchema).min(1).max(30),
 })
 
 export const createBookingSchema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(10).max(20),
-  email: z.string().trim().email().optional().or(z.literal("")),
   partySize: z.coerce.number().int().min(1).max(12),
   startsAt: z.string().min(1),
   comment: z.string().trim().max(400).optional().or(z.literal("")),

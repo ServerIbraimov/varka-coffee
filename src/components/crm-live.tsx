@@ -85,7 +85,7 @@ export function useCrmFeed(pathname: string) {
       if (order && !known.current?.has(order.id)) {
         next.push({
           id: order.id,
-          href: "/admin/orders",
+          href: `/admin/orders/${order.id}`,
           kicker: "Новый заказ",
           title: `${order.guestName} · ${formatPrice(order.total)}`,
         })
@@ -94,7 +94,7 @@ export function useCrmFeed(pathname: string) {
       if (booking && !known.current?.has(booking.id)) {
         next.push({
           id: booking.id,
-          href: "/admin/bookings",
+          href: `/admin/bookings/${booking.id}`,
           kicker: "Новая бронь",
           title: `${booking.guestName} · ${booking.partySize} ${guestWord(booking.partySize)}`,
         })

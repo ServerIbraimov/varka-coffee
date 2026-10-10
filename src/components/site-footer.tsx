@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { site } from "@/lib/site"
 
 export function SiteFooter() {
@@ -32,9 +31,6 @@ export function SiteFooter() {
               </li>
             ))}
           </ul>
-          <Link href="/admin/login" className="mt-6 inline-block text-xs text-foam/40 hover:text-foam/70">
-            CRM
-          </Link>
         </div>
       </div>
     </footer>

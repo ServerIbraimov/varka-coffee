@@ -15,7 +15,7 @@ export default async function MenuPage() {
         <p className="text-xs tracking-[0.24em] text-brass uppercase">Каталог</p>
         <h1 className="display mt-3 text-5xl sm:text-6xl">Меню бара</h1>
         <p className="mt-4 text-muted leading-7">
-          {categories.length} каталога · цены в рублях. Нажмите «В корзину» — позиция сразу откроется в панели справа.
+          {categories.length} раздела · поиск и фильтры ниже. Добавление в корзину — плашкой внизу экрана.
         </p>
       </div>
 

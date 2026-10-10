@@ -1,21 +1,32 @@
 "use client"
 
-import { FormEvent, useState } from "react"
+import { FormEvent, useMemo, useState } from "react"
 import Link from "next/link"
 import { createOrderAction } from "@/app/(public)/actions"
 import { useCart } from "@/components/cart-provider"
 import { formatPrice } from "@/lib/format"
+import { minBookableDateStr, moscowDateTime, pickupTimeSlots } from "@/lib/hours"
+import { site } from "@/lib/site"
 
 export function OrderForm() {
   const { items, total, setQty, remove, clear } = useCart()
+  const minDate = minBookableDateStr()
+  const [date, setDate] = useState(minDate)
+  const [time, setTime] = useState("")
   const [pending, setPending] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const slots = useMemo(() => pickupTimeSlots(date), [date])
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!items.length) {
       setError("Добавьте позиции из меню.")
+      return
+    }
+    if (!time) {
+      setError("Выберите время самовывоза в часы работы.")
       return
     }
 
@@ -27,9 +38,8 @@ export function OrderForm() {
     const result = await createOrderAction({
       name: form.get("name"),
       phone: form.get("phone"),
-      email: form.get("email") || "",
       comment: form.get("comment") || "",
-      pickupAt: form.get("pickupAt") || "",
+      pickupAt: moscowDateTime(date, time).toISOString(),
       items: items.map((i) => ({ menuItemId: i.menuItemId, qty: i.qty })),
     })
 
@@ -42,6 +52,7 @@ export function OrderForm() {
     clear()
     setMessage(result.message)
     e.currentTarget.reset()
+    setTime("")
   }
 
   if (!items.length && message) {
@@ -76,26 +87,14 @@ export function OrderForm() {
                   <p className="text-sm text-muted">{formatPrice(item.price)}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="h-9 w-9 rounded-lg border border-line"
-                    onClick={() => setQty(item.menuItemId, item.qty - 1)}
-                  >
+                  <button type="button" className="h-9 w-9 rounded-lg border border-line" onClick={() => setQty(item.menuItemId, item.qty - 1)}>
                     −
                   </button>
                   <span className="w-6 text-center">{item.qty}</span>
-                  <button
-                    type="button"
-                    className="h-9 w-9 rounded-lg border border-line"
-                    onClick={() => setQty(item.menuItemId, item.qty + 1)}
-                  >
+                  <button type="button" className="h-9 w-9 rounded-lg border border-line" onClick={() => setQty(item.menuItemId, item.qty + 1)}>
                     +
                   </button>
-                  <button
-                    type="button"
-                    className="ml-2 text-sm text-muted underline"
-                    onClick={() => remove(item.menuItemId)}
-                  >
+                  <button type="button" className="ml-2 text-sm text-muted underline" onClick={() => remove(item.menuItemId)}>
                     убрать
                   </button>
                 </div>
@@ -111,6 +110,10 @@ export function OrderForm() {
 
       <form onSubmit={onSubmit} className="rounded-2xl border border-line bg-foam p-6 sm:p-8">
         <h2 className="display text-3xl">Контакты</h2>
+        <p className="mt-2 text-sm text-muted">
+          Самовывоз: будни {site.hours[0].open}–{site.hours[0].close}, выходные {site.hours[1].open}–
+          {site.hours[1].close}
+        </p>
         <div className="mt-6 grid gap-4">
           <label className="grid gap-1.5 text-sm">
             Имя
@@ -120,14 +123,33 @@ export function OrderForm() {
             Телефон
             <input name="phone" required className="field" placeholder="+7 900 000-00-00" />
           </label>
-          <label className="grid gap-1.5 text-sm">
-            Email <span className="text-muted">(необязательно)</span>
-            <input name="email" type="email" className="field" placeholder="you@mail.ru" />
-          </label>
-          <label className="grid gap-1.5 text-sm">
-            Время самовывоза
-            <input name="pickupAt" type="datetime-local" className="field" />
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm">
+              Дата
+              <input
+                type="date"
+                required
+                min={minDate}
+                value={date}
+                className="field"
+                onChange={(e) => {
+                  setDate(e.target.value)
+                  setTime("")
+                }}
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              Время
+              <select required className="field" value={time} onChange={(e) => setTime(e.target.value)}>
+                <option value="">Слот</option>
+                {slots.map((slot) => (
+                  <option key={slot} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <label className="grid gap-1.5 text-sm">
             Комментарий
             <textarea name="comment" className="field" placeholder="Без сахара, на овсяном..." />
@@ -137,12 +159,9 @@ export function OrderForm() {
         {error ? <p className="mt-4 text-sm text-ember">{error}</p> : null}
         {message ? <p className="mt-4 text-sm text-pine">{message}</p> : null}
 
-        <button type="submit" disabled={pending || !items.length} className="btn btn-pine mt-6 w-full">
+        <button type="submit" disabled={pending || !items.length || !slots.length} className="btn btn-pine mt-6 w-full">
           {pending ? "Отправляем..." : "Оформить заказ"}
         </button>
-        <p className="mt-3 text-xs leading-5 text-muted">
-          Демо: заказ попадает в CRM `/admin/orders`. Оплата на месте.
-        </p>
       </form>
     </div>
   )
