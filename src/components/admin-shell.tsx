@@ -88,7 +88,11 @@ export function AdminShell({
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-muted hover:bg-foam"
-            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            onClick={() => {
+              void signOut({ redirect: false }).then(() => {
+                window.location.assign("/admin/login")
+              })
+            }}
           >
             <LogOut size={16} />
             Выйти

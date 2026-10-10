@@ -49,6 +49,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers,
   callbacks: {
+    // Prefer request host over a stale AUTH_URL (e.g. localhost on Vercel)
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      try {
+        const target = new URL(url)
+        if (target.origin === baseUrl) return url
+      } catch {
+        /* ignore */
+      }
+      return baseUrl
+    },
     async signIn({ account, profile, user }) {
       if (account?.provider === "credentials") return Boolean(user?.email)
 
