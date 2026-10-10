@@ -1,0 +1,49 @@
+import { z } from "zod"
+
+export const orderItemSchema = z.object({
+  menuItemId: z.string().min(1),
+  qty: z.coerce.number().int().min(1).max(20),
+})
+
+export const createOrderSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  phone: z.string().trim().min(10).max(20),
+  email: z.string().trim().email().optional().or(z.literal("")),
+  comment: z.string().trim().max(400).optional().or(z.literal("")),
+  pickupAt: z.string().optional().or(z.literal("")),
+  items: z.array(orderItemSchema).min(1).max(30),
+})
+
+export const createBookingSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  phone: z.string().trim().min(10).max(20),
+  email: z.string().trim().email().optional().or(z.literal("")),
+  partySize: z.coerce.number().int().min(1).max(12),
+  startsAt: z.string().min(1),
+  comment: z.string().trim().max(400).optional().or(z.literal("")),
+})
+
+export const menuItemSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  description: z.string().trim().min(4).max(400),
+  price: z.coerce.number().int().min(1).max(100000),
+  category: z.string().trim().min(1),
+  image: z.string().trim().max(500).optional().or(z.literal("")),
+  featured: z.coerce.boolean().optional(),
+  available: z.coerce.boolean().optional(),
+  sort: z.coerce.number().int().min(0).max(999).optional(),
+})
+
+export const loginSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(6).max(100),
+})
+
+export function normalizePhone(phone: string) {
+  const digits = phone.replace(/\D/g, "")
+  if (digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"))) {
+    return `7${digits.slice(1)}`
+  }
+  if (digits.length === 10) return `7${digits}`
+  return digits
+}

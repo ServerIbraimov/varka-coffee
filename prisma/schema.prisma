@@ -1,0 +1,93 @@
+// Local PostgreSQL (default).
+ // Neon/Supabase: same provider — only change DATABASE_URL (+ DIRECT_URL for Supabase pooler).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String
+  price       Int
+  category    String
+  image       String      @default("")
+  featured    Boolean     @default(false)
+  available   Boolean     @default(true)
+  sort        Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Guest {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  email     String    @default("")
+  notes     String    @default("")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orders    Order[]
+  bookings  Booking[]
+
+  @@index([createdAt])
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  guestId   String
+  guest     Guest       @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  status    String      @default("new")
+  comment   String      @default("")
+  total     Int
+  pickupAt  DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id         String    @id @default(cuid())
+  orderId    String
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  name       String
+  price      Int
+  qty        Int
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  partySize Int
+  startsAt  DateTime
+  comment   String   @default("")
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, startsAt])
+  @@index([startsAt])
+}
