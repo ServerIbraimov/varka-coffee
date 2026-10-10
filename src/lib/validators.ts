@@ -7,7 +7,7 @@ export const orderItemSchema = z.object({
 
 export const createOrderSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  phone: z.string().trim().min(10).max(20),
+  phone: z.string().trim().min(8).max(24),
   comment: z.string().trim().max(400).optional().or(z.literal("")),
   pickupAt: z.string().min(1),
   items: z.array(orderItemSchema).min(1).max(30),
@@ -15,7 +15,7 @@ export const createOrderSchema = z.object({
 
 export const createBookingSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  phone: z.string().trim().min(10).max(20),
+  phone: z.string().trim().min(8).max(24),
   partySize: z.coerce.number().int().min(1).max(12),
   startsAt: z.string().min(1),
   comment: z.string().trim().max(400).optional().or(z.literal("")),
@@ -37,21 +37,4 @@ export const loginSchema = z.object({
   password: z.string().min(6).max(100),
 })
 
-export function normalizePhone(phone: string) {
-  let digits = phone.replace(/\D/g, "")
-  // Lithuania: +370 6XX XXXXX / 8 6XX XXXXX
-  if (digits.startsWith("370") && digits.length === 11) return digits
-  if (digits.startsWith("8") && digits.length === 9) return `370${digits.slice(1)}`
-  if (digits.length === 8 && digits.startsWith("6")) return `370${digits}`
-  // legacy RU fallback
-  if (digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"))) {
-    return `7${digits.slice(1)}`
-  }
-  if (digits.length === 10) return `7${digits}`
-  return digits
-}
-
-export function isValidPhone(phone: string) {
-  const n = normalizePhone(phone)
-  return (n.startsWith("370") && n.length === 11) || (n.startsWith("7") && n.length === 11)
-}
+export { normalizePhone, isValidPhone } from "@/lib/phone"

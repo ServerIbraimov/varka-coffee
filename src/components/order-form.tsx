@@ -4,6 +4,8 @@ import { FormEvent, useMemo, useState } from "react"
 import Link from "next/link"
 import { createOrderAction } from "@/app/(public)/actions"
 import { useCart } from "@/components/cart-provider"
+import { PhoneInput } from "@/components/phone-input"
+import { ThanksDialog } from "@/components/thanks-dialog"
 import { formatPrice } from "@/lib/format"
 import { cafeDateTime, minBookableDateStr, pickupTimeSlots } from "@/lib/hours"
 import { site } from "@/lib/site"
@@ -14,8 +16,10 @@ export function OrderForm() {
   const [date, setDate] = useState(minDate)
   const [time, setTime] = useState("")
   const [pending, setPending] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [thanksOpen, setThanksOpen] = useState(false)
+  const [thanksMessage, setThanksMessage] = useState("")
+  const [phoneKey, setPhoneKey] = useState(0)
 
   const slots = useMemo(() => pickupTimeSlots(date), [date])
 
@@ -32,7 +36,6 @@ export function OrderForm() {
 
     setPending(true)
     setError(null)
-    setMessage(null)
 
     const form = new FormData(e.currentTarget)
     const result = await createOrderAction({
@@ -50,21 +53,12 @@ export function OrderForm() {
     }
 
     clear()
-    setMessage(result.message)
     e.currentTarget.reset()
+    setDate(minDate)
     setTime("")
-  }
-
-  if (!items.length && message) {
-    return (
-      <div className="rounded-2xl border border-line bg-mist p-8 text-center">
-        <p className="display text-4xl">Готово</p>
-        <p className="mt-3 text-muted">{message}</p>
-        <Link href="/menu" className="btn btn-pine mt-6">
-          Вернуться в меню
-        </Link>
-      </div>
-    )
+    setPhoneKey((k) => k + 1)
+    setThanksMessage(result.message)
+    setThanksOpen(true)
   }
 
   return (
@@ -121,7 +115,7 @@ export function OrderForm() {
           </label>
           <label className="grid gap-1.5 text-sm">
             Телефон
-            <input name="phone" required className="field" placeholder="+370 612 00 000" />
+            <PhoneInput key={phoneKey} />
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm">
@@ -157,12 +151,17 @@ export function OrderForm() {
         </div>
 
         {error ? <p className="mt-4 text-sm text-ember">{error}</p> : null}
-        {message ? <p className="mt-4 text-sm text-pine">{message}</p> : null}
 
         <button type="submit" disabled={pending || !items.length || !slots.length} className="btn btn-pine mt-6 w-full">
           {pending ? "Отправляем..." : "Оформить заказ"}
         </button>
       </form>
+
+      <ThanksDialog
+        open={thanksOpen}
+        message={thanksMessage || "Заказ принят. Ждём вас у стойки."}
+        onClose={() => setThanksOpen(false)}
+      />
     </div>
   )
 }

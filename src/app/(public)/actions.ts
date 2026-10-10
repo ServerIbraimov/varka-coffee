@@ -25,7 +25,7 @@ export async function createOrderAction(input: unknown): Promise<ActionResult> {
   const data = parsed.data
   const phone = normalizePhone(data.phone)
   if (!isValidPhone(data.phone)) {
-    return { ok: false, message: "Укажите литовский номер (+370…)." }
+    return { ok: false, message: "Укажите европейский номер в формате +XX…" }
   }
 
   const pickupAt = new Date(data.pickupAt)
@@ -104,7 +104,7 @@ export async function createBookingAction(input: unknown): Promise<ActionResult>
   const data = parsed.data
   const phone = normalizePhone(data.phone)
   if (!isValidPhone(data.phone)) {
-    return { ok: false, message: "Укажите литовский номер (+370…)." }
+    return { ok: false, message: "Укажите европейский номер в формате +XX…" }
   }
 
   const startsAt = new Date(data.startsAt)

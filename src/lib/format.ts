@@ -75,17 +75,7 @@ export function groupByDay<T>(items: T[], getDate: (item: T) => string | Date) {
   return [...map.entries()].sort(([a], [b]) => (a < b ? 1 : -1))
 }
 
-export function formatPhone(phone: string) {
-  const digits = phone.replace(/\D/g, "")
-  // Lithuania: 370XXXXXXXX (11 digits)
-  if (digits.startsWith("370") && digits.length === 11) {
-    return `+370 ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`
-  }
-  if (digits.length === 11 && digits.startsWith("7")) {
-    return `+${digits[0]} (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9)}`
-  }
-  return phone
-}
+export { formatPhone } from "@/lib/phone"
 
 export function safeImage(src: string | null | undefined) {
   if (!src) return null
